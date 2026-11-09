@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一頁履歷產生器 One-Page Resume Builder</title>
+<meta name="description" content="免費一頁履歷產生器:填表即見 A4 預覽,列印成 PDF。無登入、無伺服器、資料只留喺你部機。Free one-page resume builder: fill in the form, preview on A4, print to PDF. No login, no server.">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #ffffff; color: #111111;
+  font-family: -apple-system, "PingFang HK", "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 22px; margin: 8px 0 4px; }
+.sub { color: #555; margin: 0 0 12px; }
+h2 { font-size: 17px; margin: 20px 0 6px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+label { display: block; font-size: 14px; color: #333; margin: 10px 0 2px; }
+input[type=text], input[type=email], input[type=tel], textarea, select {
+  width: 100%; font-size: 16px; padding: 9px 10px; border: 1px solid #999;
+  border-radius: 8px; background: #fff; color: #111; font-family: inherit; }
+textarea { min-height: 64px; line-height: 1.5; }
+.row { display: flex; gap: 10px; }
+.row > div { flex: 1; min-width: 0; }
+button { font-size: 16px; padding: 10px 16px; border-radius: 8px;
+  border: 1px solid #111; background: #111; color: #fff; cursor: pointer;
+  margin: 8px 6px 8px 0; }
+button.ghost { background: #fff; color: #111; }
+button.warn { background: #fff; color: #a00; border-color: #a00; }
+.controls { background: #f6f6f6; border: 1px solid #ddd; border-radius: 8px;
+  padding: 10px 12px; margin: 12px 0; }
+.controls label { display: inline-block; margin: 6px 10px 6px 0; }
+.controls select { width: auto; padding: 6px 8px; font-size: 15px; }
+#fitStatus { font-size: 15px; font-weight: bold; margin: 8px 0 0; }
+#fitStatus.ok { color: #0a7d0a; }
+#fitStatus.over { color: #a00; }
+#fitBar { height: 8px; background: #e0e0e0; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+#fitFill { height: 100%; background: #0a7d0a; width: 0%; }
+#fitFill.over { background: #a00; }
+.page-wrap { overflow: hidden; margin: 16px 0; border: 1px solid #ccc; background: #eee; padding: 12px 0; }
+.page { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2); padding: 15mm 15mm;
+  transform-origin: top center; }
+.note { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; margin: 16px 0; }
+.foot { color: #777; font-size: 13px; margin: 24px 0; }
+/* ---- resume preview styles (inside .page) ---- */
+.rv-name { font-size: 22pt; font-weight: bold; margin: 0; line-height: 1.2; }
+.rv-title { font-size: 12pt; color: #333; margin: 2px 0 6px; }
+.rv-contact { font-size: 9.5pt; color: #444; margin: 0 0 8px; }
+.rv-sec { font-size: 11pt; font-weight: bold; text-transform: uppercase;
+  letter-spacing: 1px; border-bottom: 1.5px solid #111; margin: 10px 0 4px; padding-bottom: 2px; }
+.rv-sec.modern { border-bottom: 1.5px solid #0a5c8a; color: #0a5c8a; }
+.rv-name.modern { color: #0a5c8a; }
+.rv-summary { font-size: 10.5pt; margin: 0 0 4px; }
+.rv-item { margin: 0 0 6px; }
+.rv-line1 { font-weight: bold; }
+.rv-line1 span { font-weight: normal; float: right; color: #444; }
+.rv-line2 { font-style: italic; color: #333; }
+.rv-item ul { margin: 2px 0 0 18px; padding: 0; }
+.rv-item li { margin: 0 0 1px; }
+.rv-skills { font-size: 10.5pt; margin: 0; }
+.rv-empty { color: #888; font-size: 11pt; }
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff; }
+  body * { visibility: hidden; }
+  .page-wrap { border: 0; padding: 0; margin: 0; background: #fff; overflow: visible; }
+  .page, .page * { visibility: visible; }
+  .page { position: absolute; left: 0; top: 0; width: 210mm; height: 297mm;
+    min-height: 297mm; margin: 0; padding: 15mm 15mm; box-shadow: none;
+    transform: none !important; overflow: hidden; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>一頁履歷產生器 <span style="font-size:15px;color:#555">One-Page Resume Builder</span></h1>
+  <p class="sub">填表即見 A4 預覽,保證一頁,列印就係 PDF。免費、免登入、無伺服器,資料只留喺你部機。</p>
+
+  <div>
+    <button id="sampleZh">中文範例</button>
+    <button id="sampleEn" class="ghost">English sample</button>
+    <button id="clearBtn" class="warn">清除全部 Clear</button>
+  </div>
+
+  <h2>個人資料 Personal</h2>
+  <label>姓名 Name</label>
+  <input type="text" id="f_name" placeholder="陳小明 / Chan Siu Ming">
+  <label>目標職位 Target role</label>
+  <input type="text" id="f_title" placeholder="市場營銷實習生 / Marketing Intern">
+  <div class="row">
+    <div><label>電郵 Email</label><input type="email" id="f_email" placeholder="you@example.com"></div>
+    <div><label>電話 Phone</label><input type="tel" id="f_phone" placeholder="+852 9123 4567"></div>
+  </div>
+  <div class="row">
+    <div><label>地區 Location</label><input type="text" id="f_location" placeholder="香港 / Hong Kong"></div>
+    <div><label>作品集 / LinkedIn (選填 optional)</label><input type="text" id="f_link" placeholder="linkedin.com/in/you"></div>
+  </div>
+  <label>簡介 Summary (2–3 句,寫你最想人記住嘅嘢)</label>
+  <textarea id="f_summary" placeholder="就讀香港大學工商管理二年級,對數據分析同市場推廣有興趣…"></textarea>
+
+  <h2>學歷 Education</h2>
+  <div id="eduBlock"></div>
+
+  <h2>經驗 Experience <span style="font-size:13px;color:#555;font-weight:normal">(實習 / 兼職 / 學會 / 項目都得)</span></h2>
+  <div id="expBlock"></div>
+
+  <h2>技能 Skills</h2>
+  <label>技能 (用逗號分隔, e.g. Excel, Python, 剪片)</label>
+  <input type="text" id="f_skills" placeholder="Excel, PowerPoint, Canva, Python, 廣東話, 英語">
+  <label>語言 / 證書 Languages &amp; certificates (選填 optional)</label>
+  <input type="text" id="f_lang" placeholder="廣東話 (母語)、英語 (IELTS 7.0)、普通話 (流利)">
+
+  <div class="controls">
+    <strong>版面 Layout</strong><br>
+    <label>字體大小 Font size
+      <select id="c_font">
+        <option value="9.5">9.5 pt</option>
+        <option value="10">10 pt</option>
+        <option value="10.5" selected>10.5 pt</option>
+        <option value="11">11 pt</option>
+        <option value="11.5">11.5 pt</option>
+        <option value="12">12 pt</option>
+      </select>
+    </label>
+    <label>行距 Line spacing
+      <select id="c_spacing">
+        <option value="1.15">緊密 1.15</option>
+        <option value="1.3" selected>適中 1.3</option>
+        <option value="1.45">寬鬆 1.45</option>
+      </select>
+    </label>
+    <label>邊距 Margins
+      <select id="c_margin">
+        <option value="10">窄 10 mm</option>
+        <option value="15" selected>標準 15 mm</option>
+        <option value="20">闊 20 mm</option>
+      </select>
+    </label>
+    <label>樣式 Template
+      <select id="c_template">
+        <option value="classic" selected>經典 Classic</option>
+        <option value="modern">現代 Modern (藍)</option>
+      </select>
+    </label>
+    <br>
+    <button id="autofit">一鍵縮到一頁 Auto-fit to one page</button>
+    <button id="printBtn">列印 / 存成 PDF Print to PDF</button>
+    <p id="fitStatus" class="ok">✓ 啱啱好一頁 Fits on one page</p>
+    <div id="fitBar"><div id="fitFill"></div></div>
+  </div>
+
+  <h2>預覽 Preview — A4</h2>
+  <div class="page-wrap" id="pageWrap"><div class="page" id="page"><div id="preview"></div></div></div>
+
+  <div class="note">資料只儲喺你部瀏覽器 (localStorage),唔會上傳去任何伺服器。喺同一部機、同一瀏覽器打開,上次填嘅嘢會自動返嚟。清瀏覽器資料會一併清走,列印 PDF 之前記得存底。<br>
+  Your data is stored only in this browser (localStorage) and never uploaded. It comes back when you reopen this page in the same browser; clearing browser data erases it, so print your PDF first.</div>
+  <p class="foot">One-Page Resume Builder — 開放原始碼 (MIT)。純 HTML/CSS/ES5,零外部資源,離線可用。唔寫稿、唔代投、唔存伺服器。</p>
+</div>
+<script>
+/* One-Page Resume Builder — ES5 only, iOS 16 Safari safe. No network, no server. */
+var STORE_KEY = "one-page-resume-v1";
+var FIELD_IDS = ["f_name", "f_title", "f_email", "f_phone", "f_location", "f_link",
+  "f_summary", "f_skills", "f_lang"];
+var EDU_COUNT = 3, EXP_COUNT = 3;
+
+var SAMPLE_ZH = {
+  f_name: "陳小明", f_title: "市場營銷實習生",
+  f_email: "siu.ming@example.com", f_phone: "+852 9123 4567",
+  f_location: "香港", f_link: "linkedin.com/in/siuming",
+  f_summary: "香港大學工商管理二年級,主修市場學,對數據分析同內容營銷有興趣。做過兩份兼職同一個學會項目,識用 Excel 做報表、用 Canva 出圖,搵緊暑期實習學實戰。",
+  edu: [
+    { school: "香港大學", degree: "工商管理學士 (市場學主修)", dates: "2024 – 2028 (預計)", note: "GPA 3.5 / 4.0; Dean's List 2024–25" },
+    { school: "聖保羅男女中學", degree: "香港中學文憑 (DSE)", dates: "2018 – 2024", note: "英文 5**、數學 5*、通識 5" },
+    { school: "", degree: "", dates: "", note: "" }
+  ],
+  exp: [
+    { role: "市場推廣助理 (兼職)", org: "本地咖啡店 — Café Corner", dates: "2025年6月 – 至今",
+      bullets: "負責 Instagram 內容,3 個月追蹤人數由 800 升到 2,400\n策劃開學推廣活動,帶動單週營業額升 18%\n用 Excel 整理每日銷售,每週出一份簡單報表" },
+    { role: "宣傳幹事", org: "香港大學市場學會", dates: "2024年9月 – 2025年5月",
+      bullets: "為迎新營設計海報同宣傳片,報名人數比上年多 30%\n協調 12 人義工團隊,活動當日零甩漏" },
+    { role: "店務助理 (兼職)", org: "便利店", dates: "2024年暑假",
+      bullets: "負責收銀、補貨同處理顧客查詢" }
+  ],
+  f_skills: "Excel, PowerPoint, Canva, Google Analytics, 廣東話, 英語, 普通話",
+  f_lang: "廣東話 (母語)、英語 (IELTS 7.0)、普通話 (流利)"
+};
+
+var SAMPLE_EN = {
+  f_name: "Chan Siu Ming", f_title: "Marketing Intern",
+  f_email: "siu.ming@example.com", f_phone: "+852 9123 4567",
+  f_location: "Hong Kong", f_link: "linkedin.com/in/siuming",
+  f_summary: "Second-year BBA (Marketing) student at HKU, interested in data analysis and content marketing. Two part-time jobs and one society project so far; I build reports in Excel and design creatives in Canva. Looking for a summer internship to learn on real work.",
+  edu: [
+    { school: "The University of Hong Kong", degree: "BBA, Major in Marketing", dates: "2024 – 2028 (expected)", note: "GPA 3.5 / 4.0; Dean's List 2024–25" },
+    { school: "St. Paul's Co-educational College", degree: "HKDSE", dates: "2018 – 2024", note: "English 5**, Mathematics 5*, Liberal Studies 5" },
+    { school: "", degree: "", dates: "", note: "" }
+  ],
+  exp: [
+    { role: "Marketing Assistant (Part-time)", org: "Café Corner — local coffee shop", dates: "Jun 2025 – Present",
+      bullets: "Ran the Instagram account; followers grew from 800 to 2,400 in 3 months\nPlanned a back-to-school campaign that lifted weekly revenue 18%\nTracked daily sales in Excel and issued a weekly summary" },
+    { role: "Publicity Officer", org: "HKU Marketing Society", dates: "Sep 2024 – May 2025",
+      bullets: "Designed posters and a promo video for orientation camp; sign-ups up 30% year on year\nCoordinated 12 volunteers; event ran with no missed tasks" },
+    { role: "Shop Assistant (Part-time)", org: "Convenience store", dates: "Summer 2024",
+      bullets: "Handled cashier duties, restocking and customer enquiries" }
+  ],
+  f_skills: "Excel, PowerPoint, Canva, Google Analytics, Cantonese, English, Mandarin",
+  f_lang: "Cantonese (native), English (IELTS 7.0), Mandarin (fluent)"
+};
+
+/* ---------- pure functions (also used by tests) ---------- */
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function splitLines(s) {
+  var out = [], parts = String(s || "").split("\n"), i;
+  for (i = 0; i < parts.length; i++) {
+    if (parts[i].replace(/^\s+|\s+$/g, "")) out.push(parts[i].replace(/^\s+|\s+$/g, ""));
+  }
+  return out;
+}
+function contactLine(d) {
+  var bits = [], i;
+  var cand = [d.f_email, d.f_phone, d.f_location, d.f_link];
+  for (i = 0; i < cand.length; i++) if (cand[i]) bits.push(cand[i]);
+  return bits.join("  ·  ");
+}
+/* Estimate content height in mm at given font size / spacing / margin.
+   Rough but conservative: ~90 chars per line at 10.5pt in 180mm text width.
+   Used for tests and as a fallback; the live meter measures the real page. */
+function estimateHeightMm(d, opts) {
+  var fontPt = opts.fontPt, spacing = opts.spacing, marginMm = opts.marginMm;
+  var widthMm = 210 - marginMm * 2;
+  var charsPerLine = Math.max(40, Math.floor(widthMm / (fontPt * 0.42)));
+  var lineMm = fontPt * 0.3528 * spacing;
+  var lines = 0, i, j, bullets;
+  lines += d.f_name ? 1.4 : 0;
+  lines += d.f_title ? 1 : 0;
+  lines += contactLine(d) ? 1 : 0;
+  lines += Math.ceil((d.f_summary || "").length / charsPerLine) || 0;
+  lines += 1.5; /* section headings */
+  for (i = 0; i < d.edu.length; i++) {
+    if (!d.edu[i].school && !d.edu[i].degree) continue;
+    lines += 2 + Math.ceil((d.edu[i].note || "").length / charsPerLine);
+  }
+  lines += 1.5;
+  for (i = 0; i < d.exp.length; i++) {
+    if (!d.exp[i].role && !d.exp[i].org) continue;
+    lines += 2;
+    bullets = splitLines(d.exp[i].bullets);
+    for (j = 0; j < bullets.length; j++) lines += Math.ceil(bullets[j].length / (charsPerLine - 4)) || 1;
+  }
+  lines += 1.5;
+  lines += Math.ceil((d.f_skills || "").length / charsPerLine) || 0;
+  lines += Math.ceil((d.f_lang || "").length / charsPerLine) || 0;
+  return lines * lineMm + marginMm * 2;
+}
+function fitsOnePage(d, opts) {
+  return estimateHeightMm(d, opts) <= 297;
+}
+function buildResumeHTML(d, opts) {
+  var mod = opts.template === "modern" ? " modern" : "";
+  var h = "", i, bullets, j;
+  h += '<p class="rv-name' + mod + '">' + escapeHtml(d.f_name || "你的名字 Your Name") + "</p>";
+  if (d.f_title) h += '<p class="rv-title">' + escapeHtml(d.f_title) + "</p>";
+  if (contactLine(d)) h += '<p class="rv-contact">' + escapeHtml(contactLine(d)) + "</p>";
+  if (d.f_summary) {
+    h += '<p class="rv-sec' + mod + '">簡介 / Profile</p>';
+    h += '<p class="rv-summary">' + escapeHtml(d.f_summary) + "</p>";
+  }
+  h += '<p class="rv-sec' + mod + '">學歷 / Education</p>';
+  for (i = 0; i < d.edu.length; i++) {
+    if (!d.edu[i].school && !d.edu[i].degree) continue;
+    h += '<div class="rv-item"><div class="rv-line1">' + escapeHtml(d.edu[i].school) +
+      (d.edu[i].dates ? " <span>" + escapeHtml(d.edu[i].dates) + "</span>" : "") + "</div>";
+    if (d.edu[i].degree) h += '<div class="rv-line2">' + escapeHtml(d.edu[i].degree) + "</div>";
+    if (d.edu[i].note) h += "<div>" + escapeHtml(d.edu[i].note) + "</div>";
+    h += "</div>";
+  }
+  h += '<p class="rv-sec' + mod + '">經驗 / Experience</p>';
+  for (i = 0; i < d.exp.length; i++) {
+    if (!d.exp[i].role && !d.exp[i].org) continue;
+    h += '<div class="rv-item"><div class="rv-line1">' + escapeHtml(d.exp[i].role) +
+      (d.exp[i].org ? " — " + escapeHtml(d.exp[i].org) : "") +
+      (d.exp[i].dates ? " <span>" + escapeHtml(d.exp[i].dates) + "</span>" : "") + "</div>";
+    bullets = splitLines(d.exp[i].bullets);
+    if (bullets.length) {
+      h += "<ul>";
+      for (j = 0; j < bullets.length; j++) h += "<li>" + escapeHtml(bullets[j]) + "</li>";
+      h += "</ul>";
+    }
+    h += "</div>";
+  }
+  h += '<p class="rv-sec' + mod + '">技能 / Skills</p>';
+  if (d.f_skills) h += '<p class="rv-skills">' + escapeHtml(d.f_skills) + "</p>";
+  if (d.f_lang) h += '<p class="rv-skills">' + escapeHtml(d.f_lang) + "</p>";
+  if (!d.f_skills && !d.f_lang) h += '<p class="rv-empty">未填寫技能 — 填上面「技能」一欄,呢度即刻出現。</p>';
+  return h;
+}
+function saveToStorage(storage, data) {
+  try { storage.setItem(STORE_KEY, JSON.stringify(data)); return true; }
+  catch (e) { return false; }
+}
+function loadFromStorage(storage) {
+  var raw, data;
+  try { raw = storage.getItem(STORE_KEY); } catch (e) { return null; }
+  if (!raw) return null;
+  try { data = JSON.parse(raw); } catch (e) { return null; }
+  return data;
+}
+
+/* ---------- browser wiring (skipped when there is no DOM, e.g. tests) ---------- */
+if (typeof document !== "undefined" && document.getElementById) { init(); }
+
+function el(id) { return document.getElementById(id); }
+function val(id) { var n = el(id); return n ? n.value : ""; }
+
+function buildEduExpInputs() {
+  var i, h = "";
+  for (i = 1; i <= EDU_COUNT; i++) {
+    h += '<div class="row"><div><label>學校 ' + i + ' School</label>' +
+      '<input type="text" id="e' + i + '_school"></div>' +
+      '<div><label>學位 / 課程 Degree</label>' +
+      '<input type="text" id="e' + i + '_degree"></div></div>' +
+      '<div class="row"><div><label>年份 Dates</label>' +
+      '<input type="text" id="e' + i + '_dates" placeholder="2024 – 2028"></div>' +
+      '<div><label>備註 (GPA / 獎項) Note</label>' +
+      '<input type="text" id="e' + i + '_note"></div></div>';
+  }
+  el("eduBlock").innerHTML = h;
+  h = "";
+  for (i = 1; i <= EXP_COUNT; i++) {
+    h += '<label>職位 ' + i + ' Role</label><input type="text" id="x' + i + '_role">' +
+      '<div class="row"><div><label>機構 Organisation</label>' +
+      '<input type="text" id="x' + i + '_org"></div>' +
+      '<div><label>年份 Dates</label>' +
+      '<input type="text" id="x' + i + '_dates" placeholder="2025年6月 – 至今"></div></div>' +
+      '<label>要點 (每行一點,寫成果 + 數字)</label>' +
+      '<textarea id="x' + i + '_bullets" placeholder="負責 Instagram 內容,追蹤人數由 800 升到 2,400"></textarea>';
+  }
+  el("expBlock").innerHTML = h;
+}
+
+function collectData() {
+  var d = { edu: [], exp: [] }, i;
+  for (i = 0; i < FIELD_IDS.length; i++) d[FIELD_IDS[i]] = val(FIELD_IDS[i]);
+  for (i = 1; i <= EDU_COUNT; i++) {
+    d.edu.push({ school: val("e" + i + "_school"), degree: val("e" + i + "_degree"),
+      dates: val("e" + i + "_dates"), note: val("e" + i + "_note") });
+  }
+  for (i = 1; i <= EXP_COUNT; i++) {
+    d.exp.push({ role: val("x" + i + "_role"), org: val("x" + i + "_org"),
+      dates: val("x" + i + "_dates"), bullets: val("x" + i + "_bullets") });
+  }
+  return d;
+}
+function fillForm(d) {
+  var i;
+  for (i = 0; i < FIELD_IDS.length; i++) if (el(FIELD_IDS[i])) el(FIELD_IDS[i]).value = d[FIELD_IDS[i]] || "";
+  for (i = 1; i <= EDU_COUNT; i++) {
+    if (d.edu && d.edu[i - 1]) {
+      el("e" + i + "_school").value = d.edu[i - 1].school || "";
+      el("e" + i + "_degree").value = d.edu[i - 1].degree || "";
+      el("e" + i + "_dates").value = d.edu[i - 1].dates || "";
+      el("e" + i + "_note").value = d.edu[i - 1].note || "";
+    }
+  }
+  for (i = 1; i <= EXP_COUNT; i++) {
+    if (d.exp && d.exp[i - 1]) {
+      el("x" + i + "_role").value = d.exp[i - 1].role || "";
+      el("x" + i + "_org").value = d.exp[i - 1].org || "";
+      el("x" + i + "_dates").value = d.exp[i - 1].dates || "";
+      el("x" + i + "_bullets").value = d.exp[i - 1].bullets || "";
+    }
+  }
+}
+function currentOpts() {
+  return { fontPt: parseFloat(val("c_font")) || 10.5,
+    spacing: parseFloat(val("c_spacing")) || 1.3,
+    marginMm: parseFloat(val("c_margin")) || 15,
+    template: val("c_template") || "classic" };
+}
+function render() {
+  var d = collectData(), opts = currentOpts();
+  var page = el("page");
+  page.style.fontSize = opts.fontPt + "pt";
+  page.style.lineHeight = String(opts.spacing);
+  page.style.padding = opts.marginMm + "mm";
+  el("preview").innerHTML = buildResumeHTML(d, opts);
+  saveToStorage(window.localStorage, d);
+  updateFit(page, d, opts);
+  fitPageToScreen();
+}
+function updateFit(page, d, opts) {
+  var over, usedMm, pct, status = el("fitStatus"), fill = el("fitFill");
+  var contentH = page.scrollHeight, pageH = page.clientHeight || 1;
+  /* scrollHeight includes padding; compare against the 297mm box height */
+  var boxHpx = 297 / 25.4 * 96;
+  over = contentH > boxHpx + 2;
+  usedMm = contentH / 96 * 25.4;
+  pct = Math.min(100, Math.round(usedMm / 297 * 100));
+  fill.style.width = String(pct) + "%";
+  if (over) {
+    status.className = "over";
+    status.textContent = "✗ 超出一頁 Over by about " + Math.round(usedMm - 297) +
+      " mm — 撳「一鍵縮到一頁」或刪減內容 (" + pct + "% of page)";
+    fill.className = "over";
+  } else {
+    status.className = "ok";
+    status.textContent = "✓ 啱啱好一頁 Fits on one page (" + pct + "% of page used)";
+    fill.className = "";
+  }
+}
+function fitPageToScreen() {
+  var wrap = el("pageWrap"), page = el("page");
+  var avail = wrap.clientWidth - 24;
+  var scale = Math.min(1, avail / 794);
+  page.style.transform = "scale(" + scale + ")";
+  wrap.style.height = Math.round(1123 * scale + 24) + "px";
+}
+function autoFit() {
+  var fonts = [12, 11.5, 11, 10.5, 10, 9.5], spacings = [1.45, 1.3, 1.15];
+  var fi, si, d = collectData(), page = el("page");
+  var opts = currentOpts();
+  var boxHpx = 297 / 25.4 * 96;
+  function apply(o) {
+    page.style.fontSize = o.fontPt + "pt";
+    page.style.lineHeight = String(o.spacing);
+    page.style.padding = o.marginMm + "mm";
+    el("preview").innerHTML = buildResumeHTML(d, o);
+  }
+  for (fi = 0; fi < fonts.length; fi++) {
+    for (si = 0; si < spacings.length; si++) {
+      opts.fontPt = fonts[fi]; opts.spacing = spacings[si]; opts.marginMm = 10;
+      apply(opts);
+      if (page.scrollHeight <= boxHpx + 2) {
+        el("c_font").value = String(fonts[fi]);
+        el("c_spacing").value = String(spacings[si]);
+        el("c_margin").value = "10";
+        render();
+        return "fitted at " + fonts[fi] + "pt / " + spacings[si];
+      }
+    }
+  }
+  el("c_font").value = "9.5"; el("c_spacing").value = "1.15"; el("c_margin").value = "10";
+  render();
+  return "still over at smallest settings — shorten the content";
+}
+function bind(id, ev, fn) { var n = el(id); if (n) n.addEventListener(ev, fn, false); }
+function init() {
+  var saved, i, inputs;
+  buildEduExpInputs();
+  saved = loadFromStorage(window.localStorage);
+  if (saved) fillForm(saved); else fillForm(SAMPLE_ZH);
+  inputs = document.getElementsByTagName("input");
+  for (i = 0; i < inputs.length; i++) inputs[i].addEventListener("input", render, false);
+  inputs = document.getElementsByTagName("textarea");
+  for (i = 0; i < inputs.length; i++) inputs[i].addEventListener("input", render, false);
+  inputs = document.getElementsByTagName("select");
+  for (i = 0; i < inputs.length; i++) inputs[i].addEventListener("change", render, false);
+  bind("sampleZh", "click", function () { fillForm(SAMPLE_ZH); render(); });
+  bind("sampleEn", "click", function () { fillForm(SAMPLE_EN); render(); });
+  bind("clearBtn", "click", function () {
+    if (window.confirm("清除全部內容? Clear everything?")) {
+      try { window.localStorage.removeItem(STORE_KEY); } catch (e) {}
+      fillForm({ f_name: "", f_title: "", f_email: "", f_phone: "", f_location: "",
+        f_link: "", f_summary: "", f_skills: "", f_lang: "",
+        edu: [{}, {}, {}], exp: [{}, {}, {}] });
+      render();
+    }
+  });
+  bind("autofit", "click", function () {
+    var r = autoFit();
+    alert(r === "still over at smallest settings — shorten the content"
+      ? "已縮到最細,仍然超出一頁,請刪減內容。\nSmallest settings and still over — please shorten the content."
+      : "已縮到一頁: " + r + "\nFitted to one page: " + r);
+  });
+  bind("printBtn", "click", function () { window.print(); });
+  window.addEventListener("resize", fitPageToScreen, false);
+  render();
+}
+</script>
+</body>
+</html>
