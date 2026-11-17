@@ -51,6 +51,13 @@ button.warn { background: #fff; color: #a00; border-color: #a00; }
   letter-spacing: 1px; border-bottom: 1.5px solid #111; margin: 10px 0 4px; padding-bottom: 2px; }
 .rv-sec.modern { border-bottom: 1.5px solid #0a5c8a; color: #0a5c8a; }
 .rv-name.modern { color: #0a5c8a; }
+.rv-sec.compact { margin: 6px 0 2px; }
+.rv-name.compact { font-size: 20pt; }
+.rv-item.compact { margin: 0 0 3px; }
+.rv-name.elegant { font-family: Georgia, "Times New Roman", serif; text-align: center; }
+.rv-title.elegant { text-align: center; }
+.rv-contact.elegant { text-align: center; }
+.rv-sec.elegant { text-align: center; border-bottom: 1px solid #999; letter-spacing: 2px; }
 .rv-summary { font-size: 10.5pt; margin: 0 0 4px; }
 .rv-item { margin: 0 0 6px; }
 .rv-line1 { font-weight: bold; }
@@ -80,6 +87,10 @@ button.warn { background: #fff; color: #a00; border-color: #a00; }
   <div>
     <button id="sampleZh">中文範例</button>
     <button id="sampleEn" class="ghost">English sample</button>
+    <button id="sampleTech" class="ghost">工程範例 Tech sample</button>
+    <button id="downloadJson" class="ghost">下載備份 Download JSON</button>
+    <button id="loadJsonBtn" class="ghost">載入備份 Load backup</button>
+    <input type="file" id="loadJson" accept=".json,application/json" style="display:none">
     <button id="clearBtn" class="warn">清除全部 Clear</button>
   </div>
 
@@ -96,6 +107,7 @@ button.warn { background: #fff; color: #a00; border-color: #a00; }
     <div><label>地區 Location</label><input type="text" id="f_location" placeholder="香港 / Hong Kong"></div>
     <div><label>作品集 / LinkedIn (選填 optional)</label><input type="text" id="f_link" placeholder="linkedin.com/in/you"></div>
   </div>
+  <p id="contactWarn" style="color:#a00;font-size:14px;margin:4px 0"></p>
   <label>簡介 Summary (2–3 句,寫你最想人記住嘅嘢)</label>
   <textarea id="f_summary" placeholder="就讀香港大學工商管理二年級,對數據分析同市場推廣有興趣…"></textarea>
 
@@ -104,6 +116,16 @@ button.warn { background: #fff; color: #a00; border-color: #a00; }
 
   <h2>經驗 Experience <span style="font-size:13px;color:#555;font-weight:normal">(實習 / 兼職 / 學會 / 項目都得)</span></h2>
   <div id="expBlock"></div>
+
+  <h2>項目 / 作品 Projects <span style="font-size:13px;color:#555;font-weight:normal">(選填 optional — 課程作品、side project、比賽都得)</span></h2>
+  <label>項目 1 名稱 Project 1</label>
+  <input type="text" id="p1_name" placeholder="例如:校園二手買賣小程式">
+  <label>項目 1 簡介 (一行:用咩做、做到咩效果)</label>
+  <input type="text" id="p1_desc" placeholder="用 React + Firebase 做,3 個月有 500 個用戶">
+  <label>項目 2 名稱 Project 2</label>
+  <input type="text" id="p2_name" placeholder="">
+  <label>項目 2 簡介</label>
+  <input type="text" id="p2_desc" placeholder="">
 
   <h2>技能 Skills</h2>
   <label>技能 (用逗號分隔, e.g. Excel, Python, 剪片)</label>
@@ -141,6 +163,8 @@ button.warn { background: #fff; color: #a00; border-color: #a00; }
       <select id="c_template">
         <option value="classic" selected>經典 Classic</option>
         <option value="modern">現代 Modern (藍)</option>
+        <option value="compact">緊湊 Compact (塞得更多)</option>
+        <option value="elegant">優雅 Elegant (襯線、置中)</option>
       </select>
     </label>
     <br>
@@ -153,7 +177,7 @@ button.warn { background: #fff; color: #a00; border-color: #a00; }
   <h2>預覽 Preview — A4</h2>
   <div class="page-wrap" id="pageWrap"><div class="page" id="page"><div id="preview"></div></div></div>
 
-  <div class="note">資料只儲喺你部瀏覽器 (localStorage),唔會上傳去任何伺服器。喺同一部機、同一瀏覽器打開,上次填嘅嘢會自動返嚟。清瀏覽器資料會一併清走,列印 PDF 之前記得存底。<br>
+  <div class="note">資料只儲喺你部瀏覽器 (localStorage),唔會上傳去任何伺服器。喺同一部機、同一瀏覽器打開,上次填嘅嘢會自動返嚟。清瀏覽器資料會一併清走,所以改完記得撳「下載備份」存一個 JSON 備份,第日用「載入備份」還原。<br>
   Your data is stored only in this browser (localStorage) and never uploaded. It comes back when you reopen this page in the same browser; clearing browser data erases it, so print your PDF first.</div>
   <p class="foot">One-Page Resume Builder — 開放原始碼 (MIT)。純 HTML/CSS/ES5,零外部資源,離線可用。唔寫稿、唔代投、唔存伺服器。</p>
 </div>
@@ -208,6 +232,31 @@ var SAMPLE_EN = {
   f_lang: "Cantonese (native), English (IELTS 7.0), Mandarin (fluent)"
 };
 
+var SAMPLE_TECH = {
+  f_name: "Wong Ka Ho", f_title: "Computer Science Student — Frontend / Full-stack",
+  f_email: "kaho.wong@example.com", f_phone: "+852 9876 5432",
+  f_location: "Hong Kong", f_link: "github.com/kahowong",
+  f_summary: "Final-year CS student at HKUST. I build small web tools people actually use — two side projects with real users. Looking for a junior frontend or full-stack internship.",
+  edu: [
+    { school: "HKUST", degree: "BEng in Computer Science", dates: "2023 – 2027 (expected)", note: "GPA 3.6 / 4.3; COMP 2011 Teaching Assistant" },
+    { school: "", degree: "", dates: "", note: "" },
+    { school: "", degree: "", dates: "", note: "" }
+  ],
+  exp: [
+    { role: "Frontend Intern", org: "Local startup — ShopLocal HK", dates: "Jun 2026 – Aug 2026",
+      bullets: "Rebuilt the product listing page; load time fell from 4.1s to 1.2s\nShipped a bilingual checkout flow used by 2,000+ orders a month" },
+    { role: "Teaching Assistant", org: "HKUST COMP 2011", dates: "Sep 2025 – May 2026",
+      bullets: "Ran weekly labs for 60 students; assignment pass rate up 12%" },
+    { role: "", org: "", dates: "", bullets: "" }
+  ],
+  projects: [
+    { name: "Campus Market — 二手買賣小程式", desc: "React + Firebase; 500 users in 3 months, 1,200 listings posted." },
+    { name: "Lecture Notes Search", desc: "Searches 800 PDF lecture notes in under 1 second; used by 300 classmates." }
+  ],
+  f_skills: "JavaScript, TypeScript, React, Node.js, Python, SQL, Git, Figma",
+  f_lang: "Cantonese (native), English (IELTS 7.5), Mandarin (fluent)"
+};
+
 /* ---------- pure functions (also used by tests) ---------- */
 function escapeHtml(s) {
   return String(s == null ? "" : s)
@@ -232,6 +281,7 @@ function contactLine(d) {
    Used for tests and as a fallback; the live meter measures the real page. */
 function estimateHeightMm(d, opts) {
   var fontPt = opts.fontPt, spacing = opts.spacing, marginMm = opts.marginMm;
+  var edu = d.edu || [], exp = d.exp || [];
   var widthMm = 210 - marginMm * 2;
   var charsPerLine = Math.max(40, Math.floor(widthMm / (fontPt * 0.42)));
   var lineMm = fontPt * 0.3528 * spacing;
@@ -241,16 +291,25 @@ function estimateHeightMm(d, opts) {
   lines += contactLine(d) ? 1 : 0;
   lines += Math.ceil((d.f_summary || "").length / charsPerLine) || 0;
   lines += 1.5; /* section headings */
-  for (i = 0; i < d.edu.length; i++) {
-    if (!d.edu[i].school && !d.edu[i].degree) continue;
-    lines += 2 + Math.ceil((d.edu[i].note || "").length / charsPerLine);
+  for (i = 0; i < edu.length; i++) {
+    if (!edu[i] || (!edu[i].school && !edu[i].degree)) continue;
+    lines += 2 + Math.ceil((edu[i].note || "").length / charsPerLine);
   }
   lines += 1.5;
-  for (i = 0; i < d.exp.length; i++) {
-    if (!d.exp[i].role && !d.exp[i].org) continue;
+  for (i = 0; i < exp.length; i++) {
+    if (!exp[i] || (!exp[i].role && !exp[i].org)) continue;
     lines += 2;
-    bullets = splitLines(d.exp[i].bullets);
+    bullets = splitLines(exp[i].bullets);
     for (j = 0; j < bullets.length; j++) lines += Math.ceil(bullets[j].length / (charsPerLine - 4)) || 1;
+  }
+  var projs = d.projects || [], hasProj = false, pi;
+  for (pi = 0; pi < projs.length; pi++) if (projs[pi].name || projs[pi].desc) hasProj = true;
+  if (hasProj) {
+    lines += 1.5;
+    for (i = 0; i < projs.length; i++) {
+      if (!projs[i].name && !projs[i].desc) continue;
+      lines += 1.5 + Math.ceil((projs[i].desc || "").length / charsPerLine);
+    }
   }
   lines += 1.5;
   lines += Math.ceil((d.f_skills || "").length / charsPerLine) || 0;
@@ -261,31 +320,34 @@ function fitsOnePage(d, opts) {
   return estimateHeightMm(d, opts) <= 297;
 }
 function buildResumeHTML(d, opts) {
-  var mod = opts.template === "modern" ? " modern" : "";
-  var h = "", i, bullets, j;
+  var mod = opts.template === "modern" ? " modern"
+    : opts.template === "compact" ? " compact"
+    : opts.template === "elegant" ? " elegant" : "";
+  var edu = d.edu || [], exp = d.exp || [];
+  var h = "", i, bullets, j, projs = d.projects || [];
   h += '<p class="rv-name' + mod + '">' + escapeHtml(d.f_name || "你的名字 Your Name") + "</p>";
-  if (d.f_title) h += '<p class="rv-title">' + escapeHtml(d.f_title) + "</p>";
-  if (contactLine(d)) h += '<p class="rv-contact">' + escapeHtml(contactLine(d)) + "</p>";
+  if (d.f_title) h += '<p class="rv-title' + mod + '">' + escapeHtml(d.f_title) + "</p>";
+  if (contactLine(d)) h += '<p class="rv-contact' + mod + '">' + escapeHtml(contactLine(d)) + "</p>";
   if (d.f_summary) {
     h += '<p class="rv-sec' + mod + '">簡介 / Profile</p>';
     h += '<p class="rv-summary">' + escapeHtml(d.f_summary) + "</p>";
   }
   h += '<p class="rv-sec' + mod + '">學歷 / Education</p>';
-  for (i = 0; i < d.edu.length; i++) {
-    if (!d.edu[i].school && !d.edu[i].degree) continue;
-    h += '<div class="rv-item"><div class="rv-line1">' + escapeHtml(d.edu[i].school) +
-      (d.edu[i].dates ? " <span>" + escapeHtml(d.edu[i].dates) + "</span>" : "") + "</div>";
-    if (d.edu[i].degree) h += '<div class="rv-line2">' + escapeHtml(d.edu[i].degree) + "</div>";
-    if (d.edu[i].note) h += "<div>" + escapeHtml(d.edu[i].note) + "</div>";
+  for (i = 0; i < edu.length; i++) {
+    if (!edu[i] || (!edu[i].school && !edu[i].degree)) continue;
+    h += '<div class="rv-item' + mod + '"><div class="rv-line1">' + escapeHtml(edu[i].school) +
+      (edu[i].dates ? " <span>" + escapeHtml(edu[i].dates) + "</span>" : "") + "</div>";
+    if (edu[i].degree) h += '<div class="rv-line2">' + escapeHtml(edu[i].degree) + "</div>";
+    if (edu[i].note) h += "<div>" + escapeHtml(edu[i].note) + "</div>";
     h += "</div>";
   }
   h += '<p class="rv-sec' + mod + '">經驗 / Experience</p>';
-  for (i = 0; i < d.exp.length; i++) {
-    if (!d.exp[i].role && !d.exp[i].org) continue;
-    h += '<div class="rv-item"><div class="rv-line1">' + escapeHtml(d.exp[i].role) +
-      (d.exp[i].org ? " — " + escapeHtml(d.exp[i].org) : "") +
-      (d.exp[i].dates ? " <span>" + escapeHtml(d.exp[i].dates) + "</span>" : "") + "</div>";
-    bullets = splitLines(d.exp[i].bullets);
+  for (i = 0; i < exp.length; i++) {
+    if (!exp[i] || (!exp[i].role && !exp[i].org)) continue;
+    h += '<div class="rv-item' + mod + '"><div class="rv-line1">' + escapeHtml(exp[i].role) +
+      (exp[i].org ? " — " + escapeHtml(exp[i].org) : "") +
+      (exp[i].dates ? " <span>" + escapeHtml(exp[i].dates) + "</span>" : "") + "</div>";
+    bullets = splitLines(exp[i].bullets);
     if (bullets.length) {
       h += "<ul>";
       for (j = 0; j < bullets.length; j++) h += "<li>" + escapeHtml(bullets[j]) + "</li>";
@@ -293,11 +355,47 @@ function buildResumeHTML(d, opts) {
     }
     h += "</div>";
   }
+  var hasProj = false;
+  for (i = 0; i < projs.length; i++) if (projs[i].name || projs[i].desc) hasProj = true;
+  if (hasProj) {
+    h += '<p class="rv-sec' + mod + '">項目 / Projects</p>';
+    for (i = 0; i < projs.length; i++) {
+      if (!projs[i].name && !projs[i].desc) continue;
+      h += '<div class="rv-item' + mod + '"><div class="rv-line1">' + escapeHtml(projs[i].name || "") + "</div>";
+      if (projs[i].desc) h += "<div>" + escapeHtml(projs[i].desc) + "</div>";
+      h += "</div>";
+    }
+  }
   h += '<p class="rv-sec' + mod + '">技能 / Skills</p>';
   if (d.f_skills) h += '<p class="rv-skills">' + escapeHtml(d.f_skills) + "</p>";
   if (d.f_lang) h += '<p class="rv-skills">' + escapeHtml(d.f_lang) + "</p>";
   if (!d.f_skills && !d.f_lang) h += '<p class="rv-empty">未填寫技能 — 填上面「技能」一欄,呢度即刻出現。</p>';
   return h;
+}
+function serializeResume(d) { return JSON.stringify(d); }
+function parseResumeJSON(str) {
+  var d, i;
+  try { d = JSON.parse(str); } catch (e) { return null; }
+  if (!d || typeof d !== "object" || !d.edu || !d.exp) return null;
+  /* Coerce non-object rows (e.g. null / strings in a hand-edited file) so
+     fillForm never crashes reading .school on them. */
+  for (i = 0; i < d.edu.length; i++) if (!d.edu[i] || typeof d.edu[i] !== "object") d.edu[i] = {};
+  for (i = 0; i < d.exp.length; i++) if (!d.exp[i] || typeof d.exp[i] !== "object") d.exp[i] = {};
+  if (d.projects) {
+    for (i = 0; i < d.projects.length; i++) {
+      if (!d.projects[i] || typeof d.projects[i] !== "object") d.projects[i] = {};
+    }
+  }
+  return d;
+}
+/* Contact sanity check: email without @, or a phone with too few digits.
+   Returns "" when fine, else a short bilingual warning. Pure. */
+function contactWarning(d) {
+  var warns = [];
+  if (d.f_email && d.f_email.indexOf("@") === -1) warns.push("電郵好似冇 @ — Email looks wrong (no @)");
+  var digits = String(d.f_phone || "").replace(/[^0-9]/g, "");
+  if (d.f_phone && digits.length < 7) warns.push("電話好似太短 — Phone looks too short");
+  return warns.join(" · ");
 }
 function saveToStorage(storage, data) {
   try { storage.setItem(STORE_KEY, JSON.stringify(data)); return true; }
@@ -344,8 +442,10 @@ function buildEduExpInputs() {
 }
 
 function collectData() {
-  var d = { edu: [], exp: [] }, i;
+  var d = { edu: [], exp: [], projects: [] }, i;
   for (i = 0; i < FIELD_IDS.length; i++) d[FIELD_IDS[i]] = val(FIELD_IDS[i]);
+  d.projects.push({ name: val("p1_name"), desc: val("p1_desc") });
+  d.projects.push({ name: val("p2_name"), desc: val("p2_desc") });
   for (i = 1; i <= EDU_COUNT; i++) {
     d.edu.push({ school: val("e" + i + "_school"), degree: val("e" + i + "_degree"),
       dates: val("e" + i + "_dates"), note: val("e" + i + "_note") });
@@ -358,7 +458,30 @@ function collectData() {
 }
 function fillForm(d) {
   var i;
+  /* Clear first: a backup with fewer rows must not leave stale text behind. */
+  for (i = 1; i <= EDU_COUNT; i++) {
+    if (el("e" + i + "_school")) el("e" + i + "_school").value = "";
+    if (el("e" + i + "_degree")) el("e" + i + "_degree").value = "";
+    if (el("e" + i + "_dates")) el("e" + i + "_dates").value = "";
+    if (el("e" + i + "_note")) el("e" + i + "_note").value = "";
+  }
+  for (i = 1; i <= EXP_COUNT; i++) {
+    if (el("x" + i + "_role")) el("x" + i + "_role").value = "";
+    if (el("x" + i + "_org")) el("x" + i + "_org").value = "";
+    if (el("x" + i + "_dates")) el("x" + i + "_dates").value = "";
+    if (el("x" + i + "_bullets")) el("x" + i + "_bullets").value = "";
+  }
+  if (el("p1_name")) el("p1_name").value = "";
+  if (el("p1_desc")) el("p1_desc").value = "";
+  if (el("p2_name")) el("p2_name").value = "";
+  if (el("p2_desc")) el("p2_desc").value = "";
   for (i = 0; i < FIELD_IDS.length; i++) if (el(FIELD_IDS[i])) el(FIELD_IDS[i]).value = d[FIELD_IDS[i]] || "";
+  if (d.projects) {
+    if (el("p1_name")) el("p1_name").value = (d.projects[0] && d.projects[0].name) || "";
+    if (el("p1_desc")) el("p1_desc").value = (d.projects[0] && d.projects[0].desc) || "";
+    if (el("p2_name")) el("p2_name").value = (d.projects[1] && d.projects[1].name) || "";
+    if (el("p2_desc")) el("p2_desc").value = (d.projects[1] && d.projects[1].desc) || "";
+  }
   for (i = 1; i <= EDU_COUNT; i++) {
     if (d.edu && d.edu[i - 1]) {
       el("e" + i + "_school").value = d.edu[i - 1].school || "";
@@ -390,16 +513,19 @@ function render() {
   page.style.padding = opts.marginMm + "mm";
   el("preview").innerHTML = buildResumeHTML(d, opts);
   saveToStorage(window.localStorage, d);
+  var cw = el("contactWarn");
+  if (cw) cw.textContent = contactWarning(d);
   updateFit(page, d, opts);
   fitPageToScreen();
 }
 function updateFit(page, d, opts) {
   var over, usedMm, pct, status = el("fitStatus"), fill = el("fitFill");
-  var contentH = page.scrollHeight, pageH = page.clientHeight || 1;
-  /* scrollHeight includes padding; compare against the 297mm box height */
-  var boxHpx = 297 / 25.4 * 96;
-  over = contentH > boxHpx + 2;
-  usedMm = contentH / 96 * 25.4;
+  /* Measure the #preview content itself, NOT the .page box: the box has
+     min-height 297mm, so its scrollHeight is ~297mm even for a near-empty
+     resume and the old meter always read ~100%. */
+  var contentH = el("preview").scrollHeight;
+  usedMm = contentH / 96 * 25.4 + opts.marginMm * 2;
+  over = usedMm > 297;
   pct = Math.min(100, Math.round(usedMm / 297 * 100));
   fill.style.width = String(pct) + "%";
   if (over) {
@@ -416,6 +542,7 @@ function updateFit(page, d, opts) {
 function fitPageToScreen() {
   var wrap = el("pageWrap"), page = el("page");
   var avail = wrap.clientWidth - 24;
+  if (avail < 200) avail = 200;
   var scale = Math.min(1, avail / 794);
   page.style.transform = "scale(" + scale + ")";
   wrap.style.height = Math.round(1123 * scale + 24) + "px";
@@ -424,18 +551,21 @@ function autoFit() {
   var fonts = [12, 11.5, 11, 10.5, 10, 9.5], spacings = [1.45, 1.3, 1.15];
   var fi, si, d = collectData(), page = el("page");
   var opts = currentOpts();
-  var boxHpx = 297 / 25.4 * 96;
   function apply(o) {
     page.style.fontSize = o.fontPt + "pt";
     page.style.lineHeight = String(o.spacing);
     page.style.padding = o.marginMm + "mm";
     el("preview").innerHTML = buildResumeHTML(d, o);
   }
+  /* Same content-height measure as updateFit (preview, not the 297mm box). */
+  function contentMm(o) {
+    return el("preview").scrollHeight / 96 * 25.4 + o.marginMm * 2;
+  }
   for (fi = 0; fi < fonts.length; fi++) {
     for (si = 0; si < spacings.length; si++) {
       opts.fontPt = fonts[fi]; opts.spacing = spacings[si]; opts.marginMm = 10;
       apply(opts);
-      if (page.scrollHeight <= boxHpx + 2) {
+      if (contentMm(opts) <= 297) {
         el("c_font").value = String(fonts[fi]);
         el("c_spacing").value = String(spacings[si]);
         el("c_margin").value = "10";
@@ -462,12 +592,38 @@ function init() {
   for (i = 0; i < inputs.length; i++) inputs[i].addEventListener("change", render, false);
   bind("sampleZh", "click", function () { fillForm(SAMPLE_ZH); render(); });
   bind("sampleEn", "click", function () { fillForm(SAMPLE_EN); render(); });
+  bind("sampleTech", "click", function () { fillForm(SAMPLE_TECH); render(); });
+  bind("downloadJson", "click", function () {
+    try {
+      var blob = new Blob([serializeResume(collectData())], { type: "application/json;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = window.URL.createObjectURL(blob);
+      a.download = "resume-backup.json";
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { window.URL.revokeObjectURL(a.href); }, 1000);
+    } catch (e) { alert("下載備份失敗 Download failed: " + e.message); }
+  });
+  bind("loadJsonBtn", "click", function () { el("loadJson").click(); });
+  bind("loadJson", "change", function () {
+    var f = el("loadJson").files && el("loadJson").files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var d = parseResumeJSON(reader.result);
+      if (!d) { alert("呢個唔係履歷備份檔。Not a resume backup file."); el("loadJson").value = ""; return; }
+      fillForm(d); render();
+      alert("已載入備份。Backup loaded.");
+      el("loadJson").value = "";
+    };
+    reader.readAsText(f);
+  });
   bind("clearBtn", "click", function () {
     if (window.confirm("清除全部內容? Clear everything?")) {
       try { window.localStorage.removeItem(STORE_KEY); } catch (e) {}
       fillForm({ f_name: "", f_title: "", f_email: "", f_phone: "", f_location: "",
         f_link: "", f_summary: "", f_skills: "", f_lang: "",
-        edu: [{}, {}, {}], exp: [{}, {}, {}] });
+        edu: [{}, {}, {}], exp: [{}, {}, {}], projects: [{}, {}] });
       render();
     }
   });
